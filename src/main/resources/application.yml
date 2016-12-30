@@ -1,0 +1,33 @@
+spring:
+   datasource:
+      username: root #This is database username based on configuration
+      password: root #This is database password based on configuration
+      type: com.zaxxer.hikari.HikariDataSource #This is configuration for datasource type . Here I am using HikariDataSource. For more detail read spring boot appendix
+      url: jdbc:mysql://localhost:3306/userauthentication?useSSL=false #This is mysql jdbc url.
+   jpa:
+     generate-ddl: true #jpa ddl generate true
+     hibernate.ddl-auto: update #hibernate ddl-auto
+     show-sql: true #show sql query
+     format-sql: true #show sql query formated
+     database-platform: org.hibernate.dialect.MySQLDialect #Database platform MySQLDialect
+     properties:
+       hibernate:
+         current_session_context_class: org.springframework.orm.hibernate5.SpringSessionContext #Spring SpringSessionContext for SessionFactory
+
+
+server:
+  context-path: / #root context path
+  port: 8080 #port
+  compression:
+     enabled: true #comparess response in gzip
+     mime-types: application/json,application/xml,text/html,text/xml,text/plain #compress response type
+
+
+#define log level
+logging:
+  level:
+    org:
+      springframework: INFO
+      hibernate: INFO
+    com:
+     dns: INFO
