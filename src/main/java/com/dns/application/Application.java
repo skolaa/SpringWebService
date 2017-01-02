@@ -2,18 +2,12 @@ package com.dns.application;
 
 import com.dns.dao.UserEntityDao;
 import com.dns.model.UserEntity;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import springfox.documentation.swagger2.annotations.EnableSwagger2;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * This is main entry class of this application
@@ -24,7 +18,6 @@ import java.util.Map;
 
 @SpringBootApplication
 @EntityScan(basePackageClasses = {UserEntity.class})
-@EnableSwagger2
 @EnableTransactionManagement
 @EnableJpaRepositories(basePackageClasses = {UserEntityDao.class})
 @ComponentScan(basePackages = {"com.dns.*"})
