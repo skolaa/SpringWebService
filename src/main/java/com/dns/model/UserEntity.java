@@ -14,7 +14,6 @@ import java.util.Set;
  * Created by dhiren on 29/12/16.
  * @author dhiren
  * @since 29-12-2016
- * @see Role
  */
 
 @Entity(name = "user")
@@ -35,15 +34,6 @@ public class UserEntity {
     @Column(unique = true)
     @NotBlank
     private String username;
-
-    @NotBlank
-    private String password;
-
-    @NotNull
-    @ElementCollection
-    @Enumerated(EnumType.STRING)
-    @LazyCollection(LazyCollectionOption.FALSE)
-    private Set<Role> roles = new HashSet<>();
 
     public Long getId() {
         return id;
@@ -75,17 +65,5 @@ public class UserEntity {
 
     public void setUsername(String username) {
         this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public Set<Role> getRoles() {
-        return roles;
     }
 }

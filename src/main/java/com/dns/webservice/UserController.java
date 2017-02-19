@@ -1,21 +1,14 @@
 package com.dns.webservice;
 
 import com.dns.dao.UserEntityDao;
-import com.dns.model.Role;
 import com.dns.model.UserEntity;
-import com.dns.websecurity.RestAuthenticationSuccessHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+
 import javax.validation.Valid;
 import java.util.List;
 
@@ -26,7 +19,6 @@ import java.util.List;
  * @since 29-12-2016
  * @see UserEntityDao
  * @see UserEntity
- * @see PasswordEncoder
  */
 
 @RestController
@@ -37,35 +29,23 @@ public class UserController {
 
     private final UserEntityDao userEntityDao;
 
-    private final PasswordEncoder passwordEncoder;
-
     @Autowired
-    public UserController(UserEntityDao userEntityDao, PasswordEncoder passwordEncoder) {
+    public UserController(UserEntityDao userEntityDao) {
         this.userEntityDao = userEntityDao;
-        this.passwordEncoder = passwordEncoder;
     }
 
     /**
      * This method handle after successfully login user will get his own details
      * @return ResponseEntity of {@link UserEntity}
      */
-    @RequestMapping(value = "user", method = RequestMethod.GET)
-    public ResponseEntity<UserEntity> getUser()
+    @RequestMapping(value = "user-by-username/{username}", method = RequestMethod.GET)
+    public ResponseEntity<UserEntity> getUserByUserName(@PathVariable("username")String userName)
     {
         try
         {
-            Authentication auth = SecurityContextHolder.getContext()
-                    .getAuthentication();
-            if (!(auth instanceof AnonymousAuthenticationToken)) {
-                String userName = (String) auth.getPrincipal();
-                LOGGER.info("authenticated user request");
+                LOGGER.info("user request by username");
                 UserEntity userEntity = userEntityDao.findByUsername(userName);
-                userEntity.setPassword(null);
                 return ResponseEntity.ok(userEntity);
-            } else {
-                LOGGER.error("Unauthorized access");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
-            }
         }
         catch (Exception e)
         {
@@ -85,9 +65,6 @@ public class UserController {
         try
         {
             LOGGER.info("User save request");
-            if(userEntity.getRoles().isEmpty())
-                userEntity.getRoles().add(Role.USER);
-            userEntity.setPassword(passwordEncoder.encode(userEntity.getPassword()));
             userEntityDao.save(userEntity);
             return ResponseEntity.status(HttpStatus.CREATED).body(null);
         }
@@ -109,15 +86,8 @@ public class UserController {
     {
         try
         {
-            Authentication auth = SecurityContextHolder.getContext()
-                    .getAuthentication();
-            if (!(auth instanceof AnonymousAuthenticationToken) && auth.getAuthorities().contains(new SimpleGrantedAuthority("ADMIN"))) {
-                LOGGER.info("admin request");
+                LOGGER.info("get user by id");
                 return ResponseEntity.ok(userEntityDao.findOne(id));
-            } else {
-                LOGGER.error("Unauthorized access");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
-            }
         }
         catch (Exception e)
         {
@@ -127,23 +97,23 @@ public class UserController {
     }
 
     /**
-     * This method handle admin request that get all {@link UserEntity}
-     * @return ResponseEntity of {@link List} of {@link UserEntity}
+     * This method handle admin request that get user details User id
+     * @param id {@link Long} userId
+     * @return ResponseEntity of {@link UserEntity}
      */
-    @RequestMapping(value = "all-user", method = RequestMethod.GET)
-    public ResponseEntity<List<UserEntity>> getAllUser()
+    @RequestMapping(value = "user/{id}", method = RequestMethod.PUT)
+    public ResponseEntity<UserEntity> updateUser(@PathVariable("id")Long id, @RequestBody UserEntity userEntity)
     {
         try
         {
-            Authentication auth = SecurityContextHolder.getContext()
-                    .getAuthentication();
-            if (!(auth instanceof AnonymousAuthenticationToken) && auth.getAuthorities().contains(new SimpleGrantedAuthority("ADMIN"))) {
-                LOGGER.info("admin request");
-                return ResponseEntity.ok(userEntityDao.findAll());
-            } else {
-                LOGGER.error("Unauthorized access");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
-            }
+            LOGGER.info("update user request");
+            UserEntity fetchedUser = userEntityDao.findOne(id);
+            if (fetchedUser == null)
+                return ResponseEntity.notFound().build();
+            fetchedUser.setFirstName(userEntity.getFirstName());
+            fetchedUser.setLastName(userEntity.getLastName());
+            fetchedUser.setUsername(userEntity.getUsername());
+            return ResponseEntity.ok(userEntityDao.findOne(id));
         }
         catch (Exception e)
         {
@@ -151,6 +121,7 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
+
 
     /**
      * This method handle admin request that is delete user by user id
@@ -161,16 +132,9 @@ public class UserController {
     {
         try
         {
-            Authentication auth = SecurityContextHolder.getContext()
-                    .getAuthentication();
-            if (!(auth instanceof AnonymousAuthenticationToken) && auth.getAuthorities().contains(new SimpleGrantedAuthority("ADMIN"))) {
-                LOGGER.info("admin request");
+                LOGGER.info("delete user request");
                 userEntityDao.delete(id);
                 return ResponseEntity.ok(null);
-            } else {
-                LOGGER.error("Unauthorized access");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
-            }
         }
         catch (Exception e)
         {
@@ -185,22 +149,14 @@ public class UserController {
      * @param lastName {@link String}
      * @return ResponseEntity of {@link List} of {@link UserEntity}
      */
-    @RequestMapping(value = "user-by-firstname-lastname", method = RequestMethod.GET)
+    @RequestMapping(value = "user-by-firstName-lastName", method = RequestMethod.GET)
     public ResponseEntity<List<UserEntity>> searchUserByFirstNameAndLastName(@RequestParam("firstName")String firstName, @RequestParam("lastName")String lastName)
     {
         try
         {
-            Authentication auth = SecurityContextHolder.getContext()
-                    .getAuthentication();
-            if (!(auth instanceof AnonymousAuthenticationToken) && auth.getAuthorities().contains(new SimpleGrantedAuthority("ADMIN"))) {
-                LOGGER.info("admin request for fetch user by firstName and lastName ");
+                LOGGER.info("fetch user by firstName and lastName ");
                 List<UserEntity>userEntities = userEntityDao.findByFirstNameAndLastName(firstName, lastName);
-                userEntities.forEach(userEntity -> userEntity.setPassword(null));
                 return ResponseEntity.ok(userEntities);
-            } else {
-                LOGGER.error("Unauthorized access");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
-            }
         }
         catch (Exception e)
         {
@@ -219,17 +175,9 @@ public class UserController {
     {
         try
         {
-            Authentication auth = SecurityContextHolder.getContext()
-                    .getAuthentication();
-            if (!(auth instanceof AnonymousAuthenticationToken) && auth.getAuthorities().contains(new SimpleGrantedAuthority("ADMIN"))) {
-                LOGGER.info("admin request for fetch user by firstName");
+                LOGGER.info("fetch user by firstName");
                 List<UserEntity>userEntities = userEntityDao.findByFirstName(firstName);
-                userEntities.forEach(userEntity -> userEntity.setPassword(null));
                 return ResponseEntity.ok(userEntities);
-            } else {
-                LOGGER.error("Unauthorized access");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
-            }
         }
         catch (Exception e)
         {
@@ -248,17 +196,9 @@ public class UserController {
     {
         try
         {
-            Authentication auth = SecurityContextHolder.getContext()
-                    .getAuthentication();
-            if (!(auth instanceof AnonymousAuthenticationToken) && auth.getAuthorities().contains(new SimpleGrantedAuthority("ADMIN"))) {
-                LOGGER.info("admin request for fetch user by lastName");
+                LOGGER.info("fetch user by lastName");
                 List<UserEntity>userEntities = userEntityDao.findByLastName(lastName);
-                userEntities.forEach(userEntity -> userEntity.setPassword(null));
                 return ResponseEntity.ok(userEntities);
-            } else {
-                LOGGER.error("Unauthorized access");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
-            }
         }
         catch (Exception e)
         {
