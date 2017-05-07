@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,6 +24,7 @@ import java.util.List;
 
 @RestController
 @CrossOrigin
+@RequestMapping(value = "/", produces = MediaType.APPLICATION_JSON_VALUE)
 public class UserController {
 
     private final Logger LOGGER = LoggerFactory.getLogger(UserController.class);
@@ -113,7 +115,7 @@ public class UserController {
             fetchedUser.setFirstName(userEntity.getFirstName());
             fetchedUser.setLastName(userEntity.getLastName());
             fetchedUser.setUsername(userEntity.getUsername());
-            return ResponseEntity.ok(userEntityDao.findOne(id));
+            return ResponseEntity.ok(userEntityDao.save(fetchedUser));
         }
         catch (Exception e)
         {
@@ -150,7 +152,8 @@ public class UserController {
      * @return ResponseEntity of {@link List} of {@link UserEntity}
      */
     @RequestMapping(value = "user-by-firstName-lastName", method = RequestMethod.GET)
-    public ResponseEntity<List<UserEntity>> searchUserByFirstNameAndLastName(@RequestParam("firstName")String firstName, @RequestParam("lastName")String lastName)
+    public ResponseEntity<List<UserEntity>> searchUserByFirstNameAndLastName(@RequestParam("firstName")String firstName,
+                                                                             @RequestParam("lastName")String lastName)
     {
         try
         {
