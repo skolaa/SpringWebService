@@ -5,6 +5,7 @@ import com.dns.model.UserEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Example;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -206,6 +207,26 @@ public class UserController {
         catch (Exception e)
         {
             LOGGER.error("error in UserEntity fetching", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+    /**
+     * This method return user list based on user field By Example query
+     * @param userEntity {@link UserEntity}
+     * @return List of {@link UserEntity}
+     */
+    @RequestMapping(value = "find-user-by-example-query", method = RequestMethod.POST)
+    public ResponseEntity<List<UserEntity>> findUserByExampleQuery(@RequestBody UserEntity userEntity) {
+        try
+        {
+            LOGGER.info("fetch User list by example");
+            List<UserEntity>userEntities = userEntityDao.findAll(Example.of(userEntity));
+            return ResponseEntity.ok(userEntities);
+        }
+        catch (Exception e)
+        {
+            LOGGER.error("error in UserEntity List fetching", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
